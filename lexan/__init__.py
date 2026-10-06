@@ -1,0 +1,41 @@
+"""lexan: a small lexer kernel for a C-like language."""
+
+from .core import (
+    BLANKS,
+    DIGITS,
+    EOF,
+    ESCAPES,
+    KEYWORD,
+    KEYWORDS,
+    LETTERS,
+    NAME,
+    NAME_BODY,
+    NAME_START,
+    NUMBER,
+    OPERATORS,
+    PUNCT,
+    STRING,
+    LexError,
+    Token,
+    tokenize,
+)
+
+__all__ = [
+    "BLANKS",
+    "DIGITS",
+    "EOF",
+    "ESCAPES",
+    "KEYWORD",
+    "KEYWORDS",
+    "LETTERS",
+    "LexError",
+    "NAME",
+    "NAME_BODY",
+    "NAME_START",
+    "NUMBER",
+    "OPERATORS",
+    "PUNCT",
+    "STRING",
+    "Token",
+    "tokenize",
+]
