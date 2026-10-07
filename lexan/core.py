@@ -133,8 +133,12 @@ class _Scanner:
         """Step over the character at the cursor, moving line and column."""
         ch = self.source[self.index]
         self.index += 1
-        if ch == "\r" or ch == "\n":
+        if ch == "\r":
             self.line += 1
+            self.column = 1
+        elif ch == "\n":
+            if self.index < 2 or self.source[self.index - 2] != "\r":
+                self.line += 1
             self.column = 1
         else:
             self.column += 1
@@ -176,7 +180,7 @@ class _Scanner:
                 self.advance()
                 self.advance()
                 return
-            self.index += 1
+            self.advance()
         raise self.error("block comment is never closed", line, column, start)
 
     def next_token(self):
@@ -197,17 +201,19 @@ class _Scanner:
     def read_name(self, start, line, column):
         """Read a name; the keyword table decides what kind it gets."""
         self.advance()
-        while self.index < self.size and self.source[self.index] in NAME_START:
+        while self.index < self.size and self.source[self.index] in NAME_BODY:
             self.advance()
         value = self.source[start:self.index]
-        kind = KEYWORD if value.lower() in KEYWORDS else NAME
+        kind = KEYWORD if value in KEYWORDS else NAME
         return Token(kind, value, line, column, start, self.index)
 
     def read_number(self, start, line, column):
         """Read a number, its digits and its fraction if it has one."""
         while self.index < self.size and self.source[self.index] in DIGITS:
             self.advance()
-        if self.index < self.size and self.source[self.index] == ".":
+        if (self.index + 1 < self.size
+                and self.source[self.index] == "."
+                and self.source[self.index + 1] in DIGITS):
             self.advance()
             while self.index < self.size and self.source[self.index] in DIGITS:
                 self.advance()
@@ -237,7 +243,7 @@ class _Scanner:
                     raise self.error(
                         "unknown escape %r" % (letter,),
                         escape_line, escape_column, escape_start)
-                decoded.append(letter)
+                decoded.append(ESCAPES[letter])
                 self.advance()
                 continue
             decoded.append(ch)
@@ -246,7 +252,7 @@ class _Scanner:
 
     def read_punct(self, start, line, column):
         """Read one punctuation token."""
-        for size in (1, 2):
+        for size in (2, 1):
             candidate = self.source[self.index:self.index + size]
             if len(candidate) == size and candidate in OPERATORS:
                 for _ in range(size):
@@ -264,5 +270,6 @@ def tokenize(source):
     while True:
         token = scanner.next_token()
         if token.kind == EOF:
+            tokens.append(token)
             return tokens
         tokens.append(token)
